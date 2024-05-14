@@ -1,12 +1,12 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import androidx.core.math.MathUtils;
-
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -15,7 +15,7 @@ import java.util.function.DoubleSupplier;
 public class DriveSubsystem extends SubsystemBase {
     private final MecanumDrive drive;
     private DoubleSupplier forward, strafe, rotation;
-    private final Motor fL, fR, bL, bR;
+    private final List<Motor> motors;
 
     /**
      * Create a new instance of the drive subsystem.
@@ -23,14 +23,20 @@ public class DriveSubsystem extends SubsystemBase {
      * @param hardwareMap The {@link HardwareMap} to use.
      */
     public DriveSubsystem(HardwareMap hardwareMap) {
-        fL = new Motor(hardwareMap, "leftFront");
-        fR = new Motor(hardwareMap, "rightFront");
-        bL = new Motor(hardwareMap, "leftBack");
-        bR = new Motor(hardwareMap, "rightBack");
+        motors = new ArrayList<>();
+        motors.add(new Motor(hardwareMap, "leftFront"));
+        motors.add(new Motor(hardwareMap, "rightFront"));
+        motors.add(new Motor(hardwareMap, "leftBack"));
+        motors.add(new Motor(hardwareMap, "rightBack"));
 
         drive = new MecanumDrive(
-                fL, fR, bL, bR
+                motors.get(0),
+                motors.get(1),
+                motors.get(2),
+                motors.get(3)
         );
+
+        motors.forEach(motor -> motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE));
     }
 
     /**
@@ -58,27 +64,7 @@ public class DriveSubsystem extends SubsystemBase {
         );
     }
 
-    /**
-     * Stop the drive system by stopping all motors.
-     */
-    public void activateBreaks() {
-        fL.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        fR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        bL.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        bR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-
-        drive.setMaxSpeed(MathUtils.clamp(Math.abs(0), 0, 1));
-    }
-
-    /**
-     * Reactivate the drive system by turning back on the motors.
-     */
-    public void deactivateBreaks() {
-        fL.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        fR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        bL.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        bR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-
-        drive.setMaxSpeed(MathUtils.clamp(Math.abs(1), 0, 1));
+    public void setMaxSpeed(double speed) {
+        drive.setMaxSpeed(speed);
     }
 }

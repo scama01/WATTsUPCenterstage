@@ -11,6 +11,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.EndgameSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakeSubsystem;
 
@@ -26,9 +27,9 @@ public class TeleOp extends CommandOpMode {
     private OuttakeSubsystem outtake;
     private final int ADJUST_TICKS = 65;
 
-    private final ElapsedTime runtime = new ElapsedTime();
+    private EndgameSubsystem endgame;
 
-    private Trigger sensorDetection, sensorRaise;
+    private final ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void initialize() {
@@ -43,17 +44,19 @@ public class TeleOp extends CommandOpMode {
 
         outtake = new OuttakeSubsystem(hardwareMap);
 
+        endgame = new EndgameSubsystem(hardwareMap);
+
         GamepadEx driver1 = new GamepadEx(gamepad1);
         GamepadEx driver2 = new GamepadEx(gamepad2);
 
         chassis.setAxes(driver1::getLeftY, driver1::getLeftX, driver1::getRightX);
 
-        register(chassis, outtake);
+        register(chassis, outtake, endgame);
 
-        // Brake
+        // Limits
         driver1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whileHeld(chassis::activateBreaks)
-                .whenReleased(chassis::deactivateBreaks);
+                .whileHeld(() -> chassis.setMaxSpeed(0.33))
+                .whenReleased(() -> chassis.setMaxSpeed(1));
 
         // Intake
         driver2.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
@@ -85,6 +88,10 @@ public class TeleOp extends CommandOpMode {
         driver2.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(() -> outtake.adjustSlidesTicks(ADJUST_TICKS));
 
+        // Endgame
+        driver1.getGamepadButton(GamepadKeys.Button.B)
+                .whenPressed(endgame::toggleElevator);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -95,6 +102,10 @@ public class TeleOp extends CommandOpMode {
 
             telemetry.addData("Claw State", intake != null ? intake.getClawState() : "Not initialized");
             telemetry.addData("Lift State", intake != null ? intake.getLiftState() : "Not initialized");
+            telemetry.addLine();
+
+            telemetry.addData("Elevator State", endgame.getElevatorState());
+            telemetry.addData("Elevator Angle", endgame.getElevatorAngle());
             telemetry.addLine();
 
             telemetry.update();
@@ -118,18 +129,5 @@ public class TeleOp extends CommandOpMode {
         outtake.setSafeguard(() -> intake.getLiftState() != IntakeSubsystem.LiftState.RAISED);
 
         register(intake);
-
-//        sensorDetection = sensorDetection
-//                .and(new Trigger(() -> intake.getLiftState() != IntakeSubsystem.LiftState.RAISED))
-//                .and(new Trigger(() -> intake.getClawState() == IntakeSubsystem.ClawState.OPEN));
-//        sensorRaise = sensorRaise
-//                .and(new Trigger(() -> intake.getLiftState() != IntakeSubsystem.LiftState.RAISED))
-//                .and(new Trigger(() -> intake.getClawState() == IntakeSubsystem.ClawState.OPEN));
-//
-//        sensorDetection.whenActive(() -> intake.toggleClaw());
-//        sensorRaise.whileActiveContinuous(new SequentialCommandGroup(
-//                new InstantCommand(() -> intake.adjustLift(-5.0)),
-//                new WaitCommand(100)
-//        ), false);
     }
 }
