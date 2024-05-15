@@ -94,6 +94,7 @@ public class OuttakeSubsystem extends SubsystemBase {
         slides.setPower(1);
     }
 
+
     public void setSlidesPosition(int position) {
         position = MathUtils.clamp(position, 0, 4);
         setSlidesTicks(slidesPositions[position]);
