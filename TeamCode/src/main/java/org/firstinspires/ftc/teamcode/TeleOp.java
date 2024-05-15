@@ -93,8 +93,8 @@ public class TeleOp extends CommandOpMode {
 
         driver2.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(outtake::toggleSpike);
-//        driver2.getGamepadButton(GamepadKeys.Button.B)
-//                .whenPressed(outtake::toggleBlockers);
+        driver2.getGamepadButton(GamepadKeys.Button.B)
+                .whenPressed(outtake::toggleStopper);
         rightTrigger.toggleWhenActive(
                 () -> outtake.setSpikePosition(.925),
                 () -> outtake.setSpikePosition(OuttakeSubsystem.HIGH_RIGHT)
@@ -113,6 +113,10 @@ public class TeleOp extends CommandOpMode {
 
             telemetry.addData("Claw State", intake != null ? intake.getClawState() : "Not initialized");
             telemetry.addData("Lift State", intake != null ? intake.getLiftState() : "Not initialized");
+            telemetry.addLine();
+
+            telemetry.addData("Spike State", outtake.getSpikeState());
+            telemetry.addData("Stopper State", outtake.getStopperState());
             telemetry.addLine();
 
             telemetry.addData("Elevator State", endgame.getElevatorState());

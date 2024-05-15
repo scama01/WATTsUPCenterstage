@@ -66,7 +66,8 @@ public class IntakeSubsystem extends SubsystemBase {
     /**
      * Set lift position to a certain {@link LiftState}.
      *
-     * @param state The {@link LiftState} to set the position to.
+     * @param state The
+     * {@link LiftState} to set the position to.
      */
     public void setLift(LiftState state) {
         if (state == liftState) {
