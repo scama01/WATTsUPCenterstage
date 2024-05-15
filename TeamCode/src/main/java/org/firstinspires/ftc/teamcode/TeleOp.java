@@ -53,6 +53,9 @@ public class TeleOp extends CommandOpMode {
 
         register(chassis, outtake, endgame);
 
+        Trigger rightTrigger = new Trigger(() -> gamepad2.right_trigger > .3)
+                .and(new Trigger(() -> outtake.getSpikeState() == OuttakeSubsystem.SpikeState.RAISED));
+
         // Limits
         driver1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whileHeld(() -> chassis.setMaxSpeed(0.33))
@@ -88,6 +91,14 @@ public class TeleOp extends CommandOpMode {
         driver2.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(() -> outtake.adjustSlidesTicks(ADJUST_TICKS));
 
+        driver2.getGamepadButton(GamepadKeys.Button.Y)
+                .whenPressed(outtake::toggleSpike);
+//        driver2.getGamepadButton(GamepadKeys.Button.B)
+//                .whenPressed(outtake::toggleBlockers);
+        rightTrigger.toggleWhenActive(
+                () -> outtake.setSpikePosition(.925),
+                () -> outtake.setSpikePosition(OuttakeSubsystem.HIGH_RIGHT)
+        );
         // Endgame
         driver1.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(endgame::toggleElevator);

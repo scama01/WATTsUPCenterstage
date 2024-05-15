@@ -6,6 +6,8 @@ import androidx.core.math.MathUtils;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.hardware.ServoEx;
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -16,6 +18,9 @@ import java.util.function.BooleanSupplier;
 @Config
 public class OuttakeSubsystem extends SubsystemBase {
     public static int[] slidesPositions = {0, 400, 700, 1000, 1250};
+
+    public static Double LOW_LEFT = 0.02, LOW_RIGHT = 0.07;
+    public static Double HIGH_LEFT = 02.77, HIGH_RIGHT = 0.82;
 
     public enum BlockerState {
         TWO_PIXELS(108, 135), ONE_PIXEL(108, 90), FREE(60, 90);
@@ -40,7 +45,11 @@ public class OuttakeSubsystem extends SubsystemBase {
     private final DcMotor slides;
     private boolean raisingSlides = false;
 
+    private final ServoEx leftLift, rightLift;
+
     private final BlockerState blockerState = BlockerState.FREE;
+
+    private SpikeState spikeState = SpikeState.RAISED;
 
     private BooleanSupplier safeToMove = () -> true;
 
@@ -50,6 +59,11 @@ public class OuttakeSubsystem extends SubsystemBase {
         slides.setTargetPosition(0);
         slides.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slides.setPower(1);
+
+        leftLift = new SimpleServo(hw, "depo_left", 0, 220);
+        rightLift = new SimpleServo(hw, "depo_right", 0, 220);
+
+        rightLift.setInverted(true);
     }
 
     @Override
@@ -60,8 +74,8 @@ public class OuttakeSubsystem extends SubsystemBase {
 //            if (blockerState == Blocker.FREE)
 //                setStopperPositions(Blocker.TWO_PIXELS);
 //
-//            if (spikeState != Spike.RAISED)
-//                toggleSpike();
+            if (spikeState != SpikeState.RAISED)
+                toggleSpike();
         }
     }
 
@@ -101,6 +115,35 @@ public class OuttakeSubsystem extends SubsystemBase {
 
     public void adjustSlidesTicks(int ticks) {
         setSlidesTicks(slides.getTargetPosition() + ticks);
+    }
+
+    public void setSpikePosition(double position) {
+        leftLift.setPosition(MathUtils.clamp(position - 0.05, 0, 1));
+        rightLift.setPosition(MathUtils.clamp(position, 0, 1));
+
+        spikeState = (position >= HIGH_RIGHT) ? SpikeState.RAISED : SpikeState.LOWERED;
+    }
+
+    public void toggleSpike() {
+        if (!safeToMove.getAsBoolean())
+            return;
+
+        switch (spikeState) {
+            case RAISED:
+                leftLift.setPosition(LOW_LEFT);
+                rightLift.setPosition(LOW_RIGHT);
+                spikeState = SpikeState.LOWERED;
+                break;
+            case LOWERED:
+                leftLift.setPosition(HIGH_LEFT);
+                rightLift.setPosition(HIGH_RIGHT);
+                spikeState = SpikeState.RAISED;
+                break;
+        }
+    }
+
+    public SpikeState getSpikeState() {
+        return spikeState;
     }
 
     public BlockerState getBlockerState() {
