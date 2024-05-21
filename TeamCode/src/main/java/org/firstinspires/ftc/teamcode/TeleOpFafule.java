@@ -17,8 +17,8 @@ import org.firstinspires.ftc.teamcode.subsystems.OuttakeSubsystem;
 
 import java.util.List;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "PETRICA (GENERAL)", group = "TeleOp")
-public class TeleOp extends CommandOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "PETRICA (AUTOMATIZARI FAFULE)", group = "TeleOp")
+public class TeleOpFafule extends CommandOpMode {
 
     private List<LynxModule> hubs;
 

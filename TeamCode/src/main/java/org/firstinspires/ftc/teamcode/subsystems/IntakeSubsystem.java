@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.util.Pair;
 
+import androidx.core.math.MathUtils;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.ServoEx;
@@ -67,7 +69,7 @@ public class IntakeSubsystem extends SubsystemBase {
      * Set lift position to a certain {@link LiftState}.
      *
      * @param state The
-     * {@link LiftState} to set the position to.
+     *              {@link LiftState} to set the position to.
      */
     public void setLift(LiftState state) {
         if (state == liftState) {
@@ -122,7 +124,7 @@ public class IntakeSubsystem extends SubsystemBase {
      * @param adjustment Amount to adjust.
      */
     public void adjustLift(double adjustment) {
-        double newLift = left.getCurrentPosition() + adjustment;
+        double newLift = MathUtils.clamp(left.getCurrentPosition() + adjustment, 0.0, 180.00);
 
         left.setToPosition(newLift);
         right.setToPosition(newLift);

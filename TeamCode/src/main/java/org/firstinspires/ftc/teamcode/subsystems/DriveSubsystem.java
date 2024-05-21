@@ -13,7 +13,7 @@ import java.util.function.DoubleSupplier;
  * Subsystem for the drive mechanism of the robot.
  */
 public class DriveSubsystem extends SubsystemBase {
-    private final MecanumDrive drive;
+    public final MecanumDrive drive;
     private DoubleSupplier forward, strafe, rotation;
     private final List<Motor> motors;
 
@@ -64,6 +64,11 @@ public class DriveSubsystem extends SubsystemBase {
         );
     }
 
+    /**
+     * Set the maximum speed of the drive mechanism.
+     *
+     * @param speed The maximum speed of the drive mechanism.
+     */
     public void setMaxSpeed(double speed) {
         drive.setMaxSpeed(speed);
     }
