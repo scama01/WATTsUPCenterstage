@@ -3,6 +3,7 @@ package com.example.meepmeeptesting;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
+import com.noahbres.meepmeep.roadrunner.DriveTrainType;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 public class MeepMeepTesting {
@@ -10,6 +11,8 @@ public class MeepMeepTesting {
         MeepMeep meepMeep = new MeepMeep(1000);
 
         RoadRunnerBotEntity robot = new DefaultBotBuilder(meepMeep)
+                .setConstraints(50, 50, Math.PI, Math.PI, 17609.8216274349)
+                .setDriveTrainType(DriveTrainType.MECANUM)
                 .build();
 
         robot.runAction(robot.getDrive().actionBuilder(new Pose2d(12, 70, 90))

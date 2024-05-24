@@ -1,9 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.ConditionalCommand;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
@@ -17,8 +22,10 @@ import org.firstinspires.ftc.teamcode.subsystems.OuttakeSubsystem;
 
 import java.util.List;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "PETRICA (GENERAL)", group = "TeleOp")
+@Config
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "PETRICA", group = "TeleOp")
 public class TeleOp extends CommandOpMode {
+    public static int LIFT_WAIT = 150;
 
     private List<LynxModule> hubs;
 
@@ -70,7 +77,17 @@ public class TeleOp extends CommandOpMode {
                 .whenActive(() -> intake.adjustLift(-5.0));
         driver2.getGamepadButton(GamepadKeys.Button.A)
                 .and(new Trigger(() -> intake != null))
-                .whenActive(() -> intake.toggleClaw());
+                .whenActive(
+                        new ConditionalCommand(
+                                new SequentialCommandGroup(
+                                        new InstantCommand(() -> intake.toggleClaw()),
+                                        new WaitCommand(LIFT_WAIT),
+                                        new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED))
+                                ),
+                                new InstantCommand(() -> intake.toggleClaw()),
+                                () -> intake.getLiftState() == IntakeSubsystem.LiftState.STACK && intake.getClawState() == IntakeSubsystem.ClawState.OPEN
+                        )
+                );
         driver2.getGamepadButton(GamepadKeys.Button.X)
                 .and(new Trigger(() -> intake != null))
                 .whenActive(() -> intake.toggleLift());
@@ -84,7 +101,17 @@ public class TeleOp extends CommandOpMode {
         driver2.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(() -> outtake.setSlidesPosition(4));
         driver2.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> outtake.setSlidesPosition(0));
+                .whenPressed(
+                        new ConditionalCommand(
+                                new SequentialCommandGroup(
+                                        new InstantCommand(() -> outtake.toggleSpike()),
+                                        new InstantCommand(() -> outtake.setStopperPositions(OuttakeSubsystem.BlockerState.FREE)),
+                                        new InstantCommand(() -> outtake.setSlidesPosition(0))
+                                ),
+                                new InstantCommand(() -> outtake.setSlidesPosition(0)),
+                                () -> outtake.getSpikeState() == OuttakeSubsystem.SpikeState.RAISED
+                        )
+                );
 
         driver2.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(() -> outtake.adjustSlidesTicks(-ADJUST_TICKS));
@@ -97,7 +124,7 @@ public class TeleOp extends CommandOpMode {
         driver2.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(outtake::toggleStopper);
         rightTrigger.toggleWhenActive(
-                () -> outtake.setSpikePosition(.925),
+                () -> outtake.setSpikePosition(0.6),
                 () -> outtake.setSpikePosition(OuttakeSubsystem.HIGH_RIGHT)
         );
 
