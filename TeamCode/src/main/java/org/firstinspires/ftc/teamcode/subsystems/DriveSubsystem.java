@@ -15,7 +15,6 @@ import java.util.function.DoubleSupplier;
 public class DriveSubsystem extends SubsystemBase {
     public final MecanumDrive drive;
     private DoubleSupplier forward, strafe, rotation;
-    private final List<Motor> motors;
 
     /**
      * Create a new instance of the drive subsystem.
@@ -23,7 +22,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param hardwareMap The {@link HardwareMap} to use.
      */
     public DriveSubsystem(HardwareMap hardwareMap) {
-        motors = new ArrayList<>();
+        List<Motor> motors = new ArrayList<>();
         motors.add(new Motor(hardwareMap, "leftFront"));
         motors.add(new Motor(hardwareMap, "rightFront"));
         motors.add(new Motor(hardwareMap, "leftBack"));
@@ -36,13 +35,13 @@ public class DriveSubsystem extends SubsystemBase {
                 motors.get(3)
         );
 
-        motors.forEach(motor -> motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE));
+        motors.forEach(motor -> motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT));
     }
 
     /**
      * Set drive axes for the drive mechanism.
      * <p>
-     * Drive axes have to be {@link DoubleSupplier}.
+     * Drive axes have to be provided as {@link DoubleSupplier}.
      *
      * @param forward  Forward axis
      * @param strafe   Strafe axis

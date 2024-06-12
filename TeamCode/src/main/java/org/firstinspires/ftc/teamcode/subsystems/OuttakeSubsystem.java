@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.util.Pair;
 
-import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -13,6 +12,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.util.InterpolatedServo;
+
 import java.util.Arrays;
 import java.util.function.BooleanSupplier;
 
@@ -20,11 +21,14 @@ import java.util.function.BooleanSupplier;
 public class OuttakeSubsystem extends SubsystemBase {
     public static int[] slidesPositions = {0, 400, 700, 1000, 1250};
 
-    public static double LOW_LEFT = 0.02, LOW_RIGHT = 0.07;
-    public static double HIGH_LEFT = 02.77, HIGH_RIGHT = 0.82;
+    public static double SPIKE_RAISED_ANGLE = 170, SPIKE_LOWERED_ANGLE = 0;
+
+    public static double RAISE_OFFSET = 35;
 
     public enum BlockerState {
-        TWO_PIXELS(108, 135), ONE_PIXEL(108, 90), FREE(60, 90);
+        TWO_PIXELS(108, 135),
+        ONE_PIXEL(108, 90),
+        FREE(60, 90);
 
         private final double bottomPos, topPos;
 
@@ -46,11 +50,12 @@ public class OuttakeSubsystem extends SubsystemBase {
     private final DcMotor slides;
     private boolean raisingSlides = false;
 
-    private final ServoEx leftLift, rightLift;
+    private final InterpolatedServo leftLift, rightLift;
 
     private BlockerState blockerState = BlockerState.FREE;
 
     private SpikeState spikeState = SpikeState.RAISED;
+    private boolean spikeRaised = false;
 
     private BooleanSupplier safeToMove = () -> true;
 
@@ -63,18 +68,29 @@ public class OuttakeSubsystem extends SubsystemBase {
         slides.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slides.setPower(1);
 
-        leftLift = new SimpleServo(hw, "depo_left", 0, 220);
-        rightLift = new SimpleServo(hw, "depo_right", 0, 220);
+        leftLift = new InterpolatedServo(new SimpleServo(hw, "depo_left", 0, 220));
+        rightLift = new InterpolatedServo(new SimpleServo(hw, "depo_right", 0, 220));
 
         stopperTop = new SimpleServo(hw, "stopper_top", 0, 300);
         stopperBottom = new SimpleServo(hw, "stopper_bottom", 0, 300);
+
+        leftLift.generatePositions(
+                new Pair<>(0.0, 1.50),
+                new Pair<>(90.0, 94.0),
+                new Pair<>(180.0, 187.0)
+        );
+        rightLift.generatePositions(
+                new Pair<>(0.0, 2.0),
+                new Pair<>(90.0, 91.0),
+                new Pair<>(180.0, 181.0)
+        );
 
         stopperBottom.setInverted(true);
 
         rightLift.setInverted(true);
 
-        stopperBottom.turnToAngle(60);
-        stopperTop.turnToAngle(90);
+        stopperBottom.turnToAngle(BlockerState.FREE.bottomPos);
+        stopperTop.turnToAngle(BlockerState.FREE.topPos);
 
         toggleSpike();
     }
@@ -85,7 +101,7 @@ public class OuttakeSubsystem extends SubsystemBase {
             raisingSlides = false;
 
             if (blockerState == BlockerState.FREE)
-                setStopperPositions(BlockerState.TWO_PIXELS);
+                setStopperState(BlockerState.TWO_PIXELS);
 
             if (spikeState != SpikeState.RAISED)
                 toggleSpike();
@@ -131,11 +147,19 @@ public class OuttakeSubsystem extends SubsystemBase {
         setSlidesTicks(slides.getTargetPosition() + ticks);
     }
 
-    public void setSpikePosition(double position) {
-        leftLift.setPosition(MathUtils.clamp(position - 0.05, 0, 1));
-        rightLift.setPosition(MathUtils.clamp(position, 0, 1));
+    public int getSlidesPosition() {
+        return slides.getCurrentPosition();
+    }
 
-        spikeState = (position >= HIGH_RIGHT) ? SpikeState.RAISED : SpikeState.LOWERED;
+    public int getSlidesTarget() {
+        return slides.getTargetPosition();
+    }
+
+    public void setSpikeState(SpikeState state) {
+        leftLift.setToPosition(state == SpikeState.RAISED ? SPIKE_RAISED_ANGLE : SPIKE_LOWERED_ANGLE);
+        rightLift.setToPosition(state == SpikeState.RAISED ? SPIKE_RAISED_ANGLE : SPIKE_LOWERED_ANGLE);
+
+        spikeState = state;
     }
 
     public void toggleSpike() {
@@ -144,23 +168,33 @@ public class OuttakeSubsystem extends SubsystemBase {
 
         switch (spikeState) {
             case RAISED:
-                leftLift.setPosition(LOW_LEFT);
-                rightLift.setPosition(LOW_RIGHT);
-                spikeState = SpikeState.LOWERED;
+                setSpikeState(SpikeState.LOWERED);
                 break;
             case LOWERED:
-                leftLift.setPosition(HIGH_LEFT);
-                rightLift.setPosition(HIGH_RIGHT);
-                spikeState = SpikeState.RAISED;
+                setSpikeState(SpikeState.RAISED);
                 break;
         }
+    }
+
+    public void toggleSpikeRaise() {
+        if (!safeToMove.getAsBoolean() || spikeState != SpikeState.RAISED)
+            return;
+
+        spikeRaised = !spikeRaised;
+
+        leftLift.setToPosition(spikeRaised ? SPIKE_RAISED_ANGLE - RAISE_OFFSET : SPIKE_RAISED_ANGLE);
+        rightLift.setToPosition(spikeRaised ? SPIKE_RAISED_ANGLE - RAISE_OFFSET : SPIKE_RAISED_ANGLE);
     }
 
     public SpikeState getSpikeState() {
         return spikeState;
     }
 
-    public void setStopperPositions(BlockerState state) {
+    public double getSpikeAngle() {
+        return leftLift.getCurrentPosition();
+    }
+
+    public void setStopperState(BlockerState state) {
         stopperBottom.turnToAngle(state.getBlockerPositions().first);
         stopperTop.turnToAngle(state.getBlockerPositions().second);
 
@@ -170,13 +204,13 @@ public class OuttakeSubsystem extends SubsystemBase {
     public void toggleStopper() {
         switch (blockerState) {
             case TWO_PIXELS:
-                setStopperPositions(BlockerState.ONE_PIXEL);
+                setStopperState(BlockerState.ONE_PIXEL);
                 break;
             case ONE_PIXEL:
-                setStopperPositions(BlockerState.FREE);
+                setStopperState(BlockerState.FREE);
                 break;
             case FREE:
-                setStopperPositions(BlockerState.TWO_PIXELS);
+                setStopperState(BlockerState.TWO_PIXELS);
                 break;
         }
     }

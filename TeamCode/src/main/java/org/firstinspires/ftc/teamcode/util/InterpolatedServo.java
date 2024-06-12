@@ -63,6 +63,10 @@ public class InterpolatedServo {
         currentPosition = position;
     }
 
+    public void disable() {
+        this.servo.disable();
+    }
+
     public void setInverted(boolean isInverted) {
         servo.setInverted(isInverted);
     }

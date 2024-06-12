@@ -67,6 +67,9 @@ public class TeleOp extends CommandOpMode {
         driver1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whileHeld(() -> chassis.setMaxSpeed(0.33))
                 .whenReleased(() -> chassis.setMaxSpeed(1));
+        driver1.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whileHeld(() -> chassis.setMaxSpeed(0.6))
+                .whenReleased(() -> chassis.setMaxSpeed(1));
 
         // Intake
         driver2.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
@@ -85,12 +88,22 @@ public class TeleOp extends CommandOpMode {
                                         new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED))
                                 ),
                                 new InstantCommand(() -> intake.toggleClaw()),
-                                () -> intake.getLiftState() == IntakeSubsystem.LiftState.STACK && intake.getClawState() == IntakeSubsystem.ClawState.OPEN
+                                () -> (intake.getLiftState() == IntakeSubsystem.LiftState.STACK || intake.getLiftState() == IntakeSubsystem.LiftState.LOWERED) &&
+                                        intake.getClawState() == IntakeSubsystem.ClawState.OPEN
                         )
                 );
         driver2.getGamepadButton(GamepadKeys.Button.X)
                 .and(new Trigger(() -> intake != null))
-                .whenActive(() -> intake.toggleLift());
+                .whenActive(new SequentialCommandGroup(
+                        new InstantCommand(() -> intake.toggleLift()),
+                        new WaitCommand(LIFT_WAIT),
+                        new ConditionalCommand(
+                                new InstantCommand(() -> intake.toggleClaw()),
+                                new InstantCommand(),
+                                () -> (intake.getClawState() == IntakeSubsystem.ClawState.CLOSED || intake.getClawState() == IntakeSubsystem.ClawState.RAISED) &&
+                                        intake.getLiftState() == IntakeSubsystem.LiftState.STACK
+                        )
+                ));
 
         // Slides
         driver2.getGamepadButton(GamepadKeys.Button.DPAD_UP)
@@ -105,7 +118,7 @@ public class TeleOp extends CommandOpMode {
                         new ConditionalCommand(
                                 new SequentialCommandGroup(
                                         new InstantCommand(() -> outtake.toggleSpike()),
-                                        new InstantCommand(() -> outtake.setStopperPositions(OuttakeSubsystem.BlockerState.FREE)),
+                                        new InstantCommand(() -> outtake.setStopperState(OuttakeSubsystem.BlockerState.FREE)),
                                         new InstantCommand(() -> outtake.setSlidesPosition(0))
                                 ),
                                 new InstantCommand(() -> outtake.setSlidesPosition(0)),
@@ -123,14 +136,13 @@ public class TeleOp extends CommandOpMode {
                 .whenPressed(outtake::toggleSpike);
         driver2.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(outtake::toggleStopper);
-        rightTrigger.toggleWhenActive(
-                () -> outtake.setSpikePosition(0.6),
-                () -> outtake.setSpikePosition(OuttakeSubsystem.HIGH_RIGHT)
-        );
+        rightTrigger.whenActive(outtake::toggleSpikeRaise);
 
         // Endgame
         driver1.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(endgame::toggleElevator);
+        driver1.getGamepadButton(GamepadKeys.Button.Y)
+                .whenPressed(endgame::toggleLauncher);
 
         telemetry.addData("Status", "Initialized");
 
@@ -143,7 +155,12 @@ public class TeleOp extends CommandOpMode {
                     telemetry.addData("Lift State", intake != null ? intake.getLiftState() : "Not initialized");
                     telemetry.addLine();
 
+                    telemetry.addData("Slides Position", outtake.getSlidesPosition());
+                    telemetry.addData("Slides Target", outtake.getSlidesTarget());
+                    telemetry.addLine();
+
                     telemetry.addData("Spike State", outtake.getSpikeState());
+                    telemetry.addData("Spike Angle", outtake.getSpikeAngle());
                     telemetry.addData("Stopper State", outtake.getStopperState());
                     telemetry.addLine();
 

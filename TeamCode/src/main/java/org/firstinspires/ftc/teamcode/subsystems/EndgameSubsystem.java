@@ -100,6 +100,15 @@ public class EndgameSubsystem extends SubsystemBase {
         }
     }
 
+    public void toggleLauncher() {
+        if (elevatorState != ElevatorState.DRONE)
+            return;
+
+        if (Math.round(launcher.getAngle()) == 50)
+            launcher.turnToAngle(20);
+        else launcher.turnToAngle(50);
+    }
+
     /**
      * Gets the current angle of the elevator.
      *

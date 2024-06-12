@@ -17,26 +17,48 @@ import org.firstinspires.ftc.teamcode.util.InterpolatedServo;
  */
 @Config
 public class IntakeSubsystem extends SubsystemBase {
-    public static double OPEN_ANGLE = 47.5, RAISED_OPEN_ANGLE = 70, CLOSED_ANGLE = 90;
+    /*
+        public static double OPEN_ANGLE = 47.5, RAISED_OPEN_ANGLE = 70, CLOSED_ANGLE = 90;
+        public static double LOWER_LIFT = 165.0, RAISE_LIFT = 8.0, STACK_LIFT = 146.0;
+    */
 
-    public static double LOWER_LIFT = 170.0, RAISE_LIFT = 8.0, STACK_LIFT = 146.0;
+    public static double LOWER_LIFT = 165.0, RAISE_LIFT = 8.0, STACK_LIFT = 146.0;
+
+    private double getLiftAngle(LiftState state) {
+        switch (state) {
+            case STACK:
+                return STACK_LIFT;
+            case RAISED:
+                return RAISE_LIFT;
+            case LOWERED:
+                return LOWER_LIFT;
+            default:
+                return 0.0;
+        }
+    }
 
     private final ServoEx clawServo;
     private final InterpolatedServo left, right;
 
     public enum ClawState {
-        OPEN,
+        OPEN(47.5),
         /**
          * Opened state when claw is raised.
          */
-        RAISED,
-        CLOSED
+        RAISED(70),
+        CLOSED(90);
+
+        public final double angle;
+
+        ClawState(double ang) {
+            angle = ang;
+        }
     }
 
     public enum LiftState {
         LOWERED,
         STACK,
-        RAISED
+        RAISED,
     }
 
     private ClawState clawState = null;
@@ -58,8 +80,16 @@ public class IntakeSubsystem extends SubsystemBase {
         left.setInverted(false);
         right.setInverted(true);
 
-        left.generatePositions(new Pair<>(0.0, 15.0), new Pair<>(90.0, 112.5), new Pair<>(180.0, 210.0));
-        right.generatePositions(new Pair<>(0.0, 6.5), new Pair<>(90.0, 101.0), new Pair<>(180.0, 199.0));
+        left.generatePositions(
+                new Pair<>(0.0, 15.0),
+                new Pair<>(90.0, 112.5),
+                new Pair<>(180.0, 210.0)
+        );
+        right.generatePositions(
+                new Pair<>(0.0, 6.5),
+                new Pair<>(90.0, 101.0),
+                new Pair<>(180.0, 199.0)
+        );
 
         setClaw(ClawState.CLOSED);
         setLift(LiftState.RAISED);
@@ -68,33 +98,18 @@ public class IntakeSubsystem extends SubsystemBase {
     /**
      * Set lift position to a certain {@link LiftState}.
      *
-     * @param state The
-     *              {@link LiftState} to set the position to.
+     * @param state The {@link LiftState} to set the position to.
      */
     public void setLift(LiftState state) {
         if (state == liftState) {
             return;
         }
 
-        switch (state) {
-            case RAISED:
-                if (clawState == ClawState.OPEN) {
-                    setClaw(ClawState.CLOSED);
-                }
-                left.setToPosition(RAISE_LIFT);
-                right.setToPosition(RAISE_LIFT);
-                break;
-
-            case STACK:
-                left.setToPosition(STACK_LIFT);
-                right.setToPosition(STACK_LIFT);
-                break;
-
-            case LOWERED:
-                left.setToPosition(LOWER_LIFT);
-                right.setToPosition(LOWER_LIFT);
-                break;
+        if (clawState == ClawState.OPEN && state == LiftState.RAISED) {
+            setClaw(ClawState.CLOSED);
         }
+        left.setToPosition(getLiftAngle(state));
+        right.setToPosition(getLiftAngle(state));
 
         liftState = state;
     }
@@ -173,22 +188,8 @@ public class IntakeSubsystem extends SubsystemBase {
             return;
         }
 
-        switch (state) {
-            case OPEN:
-                clawServo.turnToAngle(OPEN_ANGLE);
-                clawState = state;
-                break;
-
-            case RAISED:
-                clawServo.turnToAngle(RAISED_OPEN_ANGLE);
-                clawState = state;
-                break;
-
-            case CLOSED:
-                clawServo.turnToAngle(CLOSED_ANGLE);
-                clawState = state;
-                break;
-        }
+        clawServo.turnToAngle(state.angle);
+        clawState = state;
     }
 
     /**
