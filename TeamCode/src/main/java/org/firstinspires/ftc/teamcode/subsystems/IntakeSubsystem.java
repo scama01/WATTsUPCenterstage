@@ -37,22 +37,32 @@ public class IntakeSubsystem extends SubsystemBase {
         }
     }
 
+    public static double OPEN_ANGLE = 47.5, RAISED_ANGLE = 70, CLOSED_ANGLE = 90;
+
+    private double getClawAngle(ClawState state) {
+        switch (state) {
+            case OPEN:
+                return OPEN_ANGLE;
+            case RAISED:
+                return RAISED_ANGLE;
+            case CLOSED:
+                return CLOSED_ANGLE;
+            default:
+                return 0.0;
+        }
+    }
+
+
     private final ServoEx clawServo;
     private final InterpolatedServo left, right;
 
     public enum ClawState {
-        OPEN(47.5),
+        OPEN,
         /**
          * Opened state when claw is raised.
          */
-        RAISED(70),
-        CLOSED(90);
-
-        public final double angle;
-
-        ClawState(double ang) {
-            angle = ang;
-        }
+        RAISED,
+        CLOSED
     }
 
     public enum LiftState {
@@ -188,7 +198,7 @@ public class IntakeSubsystem extends SubsystemBase {
             return;
         }
 
-        clawServo.turnToAngle(state.angle);
+        clawServo.turnToAngle(getClawAngle(state));
         clawState = state;
     }
 
