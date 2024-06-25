@@ -17,11 +17,6 @@ import org.firstinspires.ftc.teamcode.util.InterpolatedServo;
  */
 @Config
 public class IntakeSubsystem extends SubsystemBase {
-    /*
-        public static double OPEN_ANGLE = 47.5, RAISED_OPEN_ANGLE = 70, CLOSED_ANGLE = 90;
-        public static double LOWER_LIFT = 165.0, RAISE_LIFT = 8.0, STACK_LIFT = 146.0;
-    */
-
     public static double LOWER_LIFT = 165.0, RAISE_LIFT = 8.0, STACK_LIFT = 146.0;
 
     private double getLiftAngle(LiftState state) {
