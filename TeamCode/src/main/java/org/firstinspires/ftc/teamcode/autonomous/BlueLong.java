@@ -17,8 +17,8 @@ import org.firstinspires.ftc.teamcode.subsystems.OuttakeSubsystem;
 import org.firstinspires.ftc.teamcode.util.ActionCommand;
 
 @Config
-@Autonomous(name = "BlueShortTest", group = "Autonomous")
-public class BlueShort extends CommandOpMode {
+@Autonomous(name = "BlueLongTest", group = "Autonomous")
+public class BlueLong extends CommandOpMode {
     private IntakeSubsystem intake;
     private OuttakeSubsystem outtake;
 
@@ -37,20 +37,27 @@ public class BlueShort extends CommandOpMode {
         intake.setClaw(IntakeSubsystem.ClawState.CLOSED);
         outtake.setStopperState(OuttakeSubsystem.BlockerState.ONE_PIXEL);
 
-        Action startTrajectory = drive.actionBuilder(new Pose2d(11.8, 61.7, Math.toRadians(-90)))
+        Action startTrajectory = drive.actionBuilder(new Pose2d(-36.3, 59.2, Math.toRadians(-90)))
                 .lineToY(37)
                 .build();
 
-        Action boardTrajectory = drive.actionBuilder(new Pose2d(11.8, 37, Math.toRadians(-90)))
+        Action boardTrajectory = drive.actionBuilder(new Pose2d(-36.5, 37, Math.toRadians(-90)))
                 .setTangent(Math.toRadians(0))
-                .lineToXSplineHeading(49, Math.toRadians(170))
+                .lineToXSplineHeading(49, Math.toRadians(180))
                 .strafeToConstantHeading(new Vector2d(49, 30))
                 .build();
-        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 30, Math.toRadians(170)))
+
+        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 30, Math.toRadians(180)))
                 .setTangent(Math.toRadians(0))
+                .strafeToConstantHeading(new Vector2d(49, 36))
                 .strafeToConstantHeading(new Vector2d(-60,36))
                 .build();
 
+        Action backTrajectory = drive.actionBuilder(new Pose2d(-60, 36, Math.toRadians(180)))
+                .setTangent(Math.toRadians(0))
+                .strafeToConstantHeading(new Vector2d(49, 36))
+                .strafeToConstantHeading(new Vector2d(49,30))
+                .build();
 
         schedule(
                 new SequentialCommandGroup(
@@ -72,10 +79,16 @@ public class BlueShort extends CommandOpMode {
                         new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.OPEN)),
                         new WaitCommand(500),
                         new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.CLOSED)),
-                        new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED))
-
-                        
-                )
-        );
+                        new WaitCommand(500),
+                        new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED)),
+                        new WaitCommand(500),
+                        new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.RAISED)),
+                        new InstantCommand(() -> intake.toggleClaw()),
+                        new ActionCommand(backTrajectory),
+                        new InstantCommand(() -> outtake.setStopperState(OuttakeSubsystem.BlockerState.TWO_PIXELS)),
+                        new WaitCommand(250)
+                 )
+     );
     }
 }
+
