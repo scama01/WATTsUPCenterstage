@@ -13,7 +13,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 public class MeepMeepTesting {
     public static void main(String[] args) {
-        MeepMeep meepMeep = new MeepMeep(1000);
+        MeepMeep meepMeep = new MeepMeep(750);
 
         RoadRunnerBotEntity robot = new DefaultBotBuilder(meepMeep)
                 .setConstraints(
@@ -27,22 +27,26 @@ public class MeepMeepTesting {
                 .build();
 
         DriveShim drive = robot.getDrive();
-
         Action startTrajectory = drive.actionBuilder(new Pose2d(11.8, 61.7, Math.toRadians(-90)))
                 .lineToY(37)
                 .build();
 
         Action boardTrajectory = drive.actionBuilder(new Pose2d(11.8, 37, Math.toRadians(-90)))
                 .setTangent(Math.toRadians(0))
-                .lineToXSplineHeading(49, Math.toRadians(170))
-                .strafeToConstantHeading(new Vector2d(49, 30))
+                .turnTo(47.1)
+                .strafeToConstantHeading(new Vector2d(50, 31))
                 .build();
-
+        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 36, Math.toRadians(180)))
+                .setTangent(Math.toRadians(0))
+                .strafeToConstantHeading(new Vector2d(-57,40))
+                .build();
         robot.runAction(new SequentialAction(
                 startTrajectory,
                 new SleepAction(1.5),
                 boardTrajectory,
-                new SleepAction(2.5)
+                new SleepAction(2.5),
+                stackTrajectory,
+                new SleepAction(3.5)
         ));
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)

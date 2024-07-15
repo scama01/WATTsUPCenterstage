@@ -43,12 +43,12 @@ public class BlueShort extends CommandOpMode {
 
         Action boardTrajectory = drive.actionBuilder(new Pose2d(11.8, 37, Math.toRadians(-90)))
                 .setTangent(Math.toRadians(0))
-                .lineToXSplineHeading(49, Math.toRadians(170))
-                .strafeToConstantHeading(new Vector2d(49, 30))
+                .turnTo(47.1)
+                .strafeToConstantHeading(new Vector2d(50, 31))
                 .build();
-        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 30, Math.toRadians(170)))
+        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 36, Math.toRadians(180)))
                 .setTangent(Math.toRadians(0))
-                .strafeToConstantHeading(new Vector2d(-60,36))
+                .strafeToConstantHeading(new Vector2d(-57,40))
                 .build();
 
 
@@ -70,7 +70,7 @@ public class BlueShort extends CommandOpMode {
                         new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.STACK)),
                         new WaitCommand(500),
                         new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.OPEN)),
-                        new WaitCommand(500),
+                        new WaitCommand(250),
                         new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.CLOSED)),
                         new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED))
 

@@ -24,7 +24,7 @@ public class BlueLong extends CommandOpMode {
 
     @Override
     public void initialize() {
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(11.8, 61.7, Math.toRadians(-90)));
+        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(-35.8, 61.7, Math.toRadians(-90)));
 
         intake = new IntakeSubsystem(hardwareMap);
         outtake = new OuttakeSubsystem(hardwareMap);
@@ -37,28 +37,15 @@ public class BlueLong extends CommandOpMode {
         intake.setClaw(IntakeSubsystem.ClawState.CLOSED);
         outtake.setStopperState(OuttakeSubsystem.BlockerState.ONE_PIXEL);
 
-        Action startTrajectory = drive.actionBuilder(new Pose2d(-36.3, 59.2, Math.toRadians(-90)))
-                .lineToY(37)
+        Action startTrajectory = drive.actionBuilder(new Pose2d(-35.8, 61.7, Math.toRadians(-90)))
+                .lineToY(36)
                 .build();
 
-        Action boardTrajectory = drive.actionBuilder(new Pose2d(-36.5, 37, Math.toRadians(-90)))
+        Action boardTrajectory = drive.actionBuilder(new Pose2d(-35.8, 36, Math.toRadians(-90)))
                 .setTangent(Math.toRadians(0))
-                .lineToXSplineHeading(49, Math.toRadians(180))
-                .strafeToConstantHeading(new Vector2d(49, 30))
+                .turnTo(47.1)
+                .strafeToConstantHeading(new Vector2d(50    , 33))
                 .build();
-
-        Action stackTrajectory = drive.actionBuilder(new Pose2d(49, 30, Math.toRadians(180)))
-                .setTangent(Math.toRadians(0))
-                .strafeToConstantHeading(new Vector2d(49, 36))
-                .strafeToConstantHeading(new Vector2d(-60,36))
-                .build();
-
-        Action backTrajectory = drive.actionBuilder(new Pose2d(-60, 36, Math.toRadians(180)))
-                .setTangent(Math.toRadians(0))
-                .strafeToConstantHeading(new Vector2d(49, 36))
-                .strafeToConstantHeading(new Vector2d(49,30))
-                .build();
-
         schedule(
                 new SequentialCommandGroup(
                         new ActionCommand(startTrajectory),
@@ -72,21 +59,7 @@ public class BlueLong extends CommandOpMode {
                         new InstantCommand(() -> outtake.setStopperState(OuttakeSubsystem.BlockerState.FREE)),
                         new WaitCommand(450),
                         new InstantCommand(() -> outtake.toggleSpike()),
-                        new InstantCommand(() -> outtake.setSlidesPosition(0)),
-                        new ActionCommand(stackTrajectory),
-                        new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.STACK)),
-                        new WaitCommand(500),
-                        new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.OPEN)),
-                        new WaitCommand(500),
-                        new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.CLOSED)),
-                        new WaitCommand(500),
-                        new InstantCommand(() -> intake.setLift(IntakeSubsystem.LiftState.RAISED)),
-                        new WaitCommand(500),
-                        new InstantCommand(() -> intake.setClaw(IntakeSubsystem.ClawState.RAISED)),
-                        new InstantCommand(() -> intake.toggleClaw()),
-                        new ActionCommand(backTrajectory),
-                        new InstantCommand(() -> outtake.setStopperState(OuttakeSubsystem.BlockerState.TWO_PIXELS)),
-                        new WaitCommand(250)
+                        new InstantCommand(() -> outtake.setSlidesPosition(0))
                  )
      );
     }
